@@ -4,7 +4,6 @@
     android:layout_height="match_parent"
     android:background="#101010">
 
-    <!-- Top Navigation Header -->
     <RelativeLayout
         android:id="@+id/editorHeader"
         android:layout_width="match_parent"
@@ -33,7 +32,6 @@
             android:textSize="11sp" />
     </RelativeLayout>
 
-    <!-- Main Image Canvas Viewport -->
     <ImageView
         android:id="@+id/ivEditorImage"
         android:layout_width="match_parent"
@@ -43,7 +41,6 @@
         android:contentDescription="360 Photo Preview"
         android:scaleType="centerCrop" />
 
-    <!-- AI Tools Panel -->
     <LinearLayout
         android:id="@+id/aiToolsPanel"
         android:layout_width="match_parent"
