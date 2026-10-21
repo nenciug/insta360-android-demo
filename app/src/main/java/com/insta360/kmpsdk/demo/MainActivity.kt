@@ -2,7 +2,6 @@ package com.insta360.sdk.demo
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.MotionEvent
 import android.view.TextureView
 import android.widget.Button
 import android.widget.TextView
@@ -28,7 +27,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Bindings
         videoPreview = findViewById(R.id.videoPreview)
         tvStatus = findViewById(R.id.tvStatus)
         tvAiMessage = findViewById(R.id.tvAiMessage)
@@ -37,19 +35,8 @@ class MainActivity : AppCompatActivity() {
         btnRecordVideo = findViewById(R.id.btnRecordVideo)
         btnGallery = findViewById(R.id.btnGallery)
 
-        // Touch listener for 360 preview interaction
-        videoPreview.setOnTouchListener { _, event ->
-            when (event.action) {
-                MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
-                    // Touch interaction recognized for 360 viewport
-                }
-            }
-            true
-        }
-
         // Wi-Fi Connection
         btnConnectWifi.setOnClickListener {
-            animateButton(btnConnectWifi)
             tvStatus.text = "Connecting..."
             tvAiMessage.text = "🤖 Searching for camera Wi-Fi network..."
 
@@ -58,7 +45,7 @@ class MainActivity : AppCompatActivity() {
                     runOnUiThread {
                         tvStatus.text = "Connected (5.8G)"
                         tvAiMessage.text = "🤖 Camera connected successfully! Live stream active."
-                        startLivePreview()
+                        InstaCameraManager.getInstance().startPreviewStream()
                     }
                 }
 
@@ -75,11 +62,10 @@ class MainActivity : AppCompatActivity() {
 
         // Take Photo
         btnTakePhoto.setOnClickListener {
-            animateButton(btnTakePhoto)
             InstaCameraManager.getInstance().takePicture(object : ICameraOperateCallback {
                 override fun onSuccess() {
                     runOnUiThread {
-                        tvAiMessage.text = "🤖 360 Photo saved! Tap Album to edit with AI."
+                        tvAiMessage.text = "🤖 360 Photo saved! Tap AI Album to edit."
                         Toast.makeText(this@MainActivity, "Photo Saved!", Toast.LENGTH_SHORT).show()
                     }
                 }
@@ -92,7 +78,6 @@ class MainActivity : AppCompatActivity() {
 
         // Record Toggle
         btnRecordVideo.setOnClickListener {
-            animateButton(btnRecordVideo)
             if (!isRecording) {
                 InstaCameraManager.getInstance().startNormalRecord(object : ICameraOperateCallback {
                     override fun onSuccess() {
@@ -128,19 +113,8 @@ class MainActivity : AppCompatActivity() {
 
         // Open AI Editor & Local Album
         btnGallery.setOnClickListener {
-            animateButton(btnGallery)
             val intent = Intent(this, EditorActivity::class.java)
             startActivity(intent)
-        }
-    }
-
-    private fun startLivePreview() {
-        InstaCameraManager.getInstance().startPreviewStream()
-    }
-
-    private fun animateButton(button: Button) {
-        button.animate().scaleX(0.90f).scaleY(0.90f).setDuration(70).withEndAction {
-            button.animate().scaleX(1.0f).scaleY(1.0f).setDuration(70)
         }
     }
 }
