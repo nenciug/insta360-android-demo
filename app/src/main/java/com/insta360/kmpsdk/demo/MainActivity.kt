@@ -23,8 +23,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnGallery: Button
 
     private var isRecording = false
-    private var lastX = 0f
-    private var lastY = 0f
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,21 +37,11 @@ class MainActivity : AppCompatActivity() {
         btnRecordVideo = findViewById(R.id.btnRecordVideo)
         btnGallery = findViewById(R.id.btnGallery)
 
-        // Touch listener for 360 degree pan/tilt image rotation
+        // Touch listener for 360 preview interaction
         videoPreview.setOnTouchListener { _, event ->
             when (event.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    lastX = event.x
-                    lastY = event.y
-                }
-                MotionEvent.ACTION_MOVE -> {
-                    val deltaX = event.x - lastX
-                    val deltaY = event.y - lastY
-                    // Pan and rotate 360 Live Viewport via SDK
-                    InstaCameraManager.getInstance().setPipelinePanFactor(deltaX * 0.01f)
-                    InstaCameraManager.getInstance().setPipelineTiltFactor(deltaY * 0.01f)
-                    lastX = event.x
-                    lastY = event.y
+                MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
+                    // Touch interaction recognized for 360 viewport
                 }
             }
             true
@@ -69,7 +57,7 @@ class MainActivity : AppCompatActivity() {
                 override fun onConnectSuccess() {
                     runOnUiThread {
                         tvStatus.text = "Connected (5.8G)"
-                        tvAiMessage.text = "🤖 Camera connected! Swipe screen to rotate 360 view."
+                        tvAiMessage.text = "🤖 Camera connected successfully! Live stream active."
                         startLivePreview()
                     }
                 }
@@ -112,7 +100,7 @@ class MainActivity : AppCompatActivity() {
                         runOnUiThread {
                             btnRecordVideo.text = "STOP"
                             tvStatus.text = "Recording 360..."
-                            tvAiMessage.text = "🤖 Recording 360 video. Swipe to check camera angles!"
+                            tvAiMessage.text = "🤖 Recording 360 video in progress."
                         }
                     }
 
