@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#101010">
+
+    <!-- Top Navigation -->
+    <RelativeLayout
+        android:id="@+id/editorHeader"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="#1F1F1F"
+        android:paddingHorizontal="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:text="AI 360° Photo Editor"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnExport"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:backgroundTint="#00E676"
+            android:text="Export / Save"
+            android:textColor="#000000"
+            android:textSize="11sp" />
+    </RelativeLayout>
+
+    <!-- Main Image Canvas Viewport -->
+    <ImageView
+        android:id="@+id/ivEditorImage"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/aiToolsPanel"
+        android:layout_below="@id/editorHeader"
+        android:contentDescription="360 Photo Preview"
+        android:scaleType="centerCrop" />
+
+    <!-- AI Tools Panel -->
+    <LinearLayout
+        android:id="@+id/aiToolsPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:background="#1A1A1A"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/tvAiEditorStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:text="🤖 AI Suggestion: Select a preset to auto-frame your 360° photo."
+            android:textColor="#00E676"
+            android:textSize="12sp" />
+
+        <!-- AI Presets Horizontal Scroll -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btnAiTinyPlanet"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:backgroundTint="#333333"
+                    android:text="🌍 Tiny Planet"
+                    android:textColor="#FFFFFF" />
+
+                <Button
+                    android:id="@+id/btnAiFisheye"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:backgroundTint="#333333"
+                    android:text="🐟 Fisheye"
+                    android:textColor="#FFFFFF" />
+
+                <Button
+                    android:id="@+id/btnAiEnhance"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:backgroundTint="#333333"
+                    android:text="✨ Auto Enhance"
+                    android:textColor="#FFFFFF" />
+
+                <Button
+                    android:id="@+id/btnAiReframe"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:backgroundTint="#333333"
+                    android:text="📱 Reframe (9:16)"
+                    android:textColor="#FFFFFF" />
+            </LinearLayout>
+        </HorizontalScrollView>
+    </LinearLayout>
+
+</RelativeLayout>
