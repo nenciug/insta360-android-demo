@@ -1,4 +1,4 @@
-package com.insta360.sdk.demo
+package com.insta360.kmpsdk.demo
 
 import android.content.Intent
 import android.os.Bundle
@@ -35,83 +35,90 @@ class MainActivity : AppCompatActivity() {
         btnRecordVideo = findViewById(R.id.btnRecordVideo)
         btnGallery = findViewById(R.id.btnGallery)
 
-        // Wi-Fi Connection
         btnConnectWifi.setOnClickListener {
             tvStatus.text = "Connecting..."
-            tvAiMessage.text = "🤖 Searching for camera Wi-Fi network..."
-
-            InstaCameraManager.getInstance().openCamera(InstaCameraManager.CONNECT_TYPE_WIFI, object : IConnectInstaCameraCallback {
-                override fun onConnectSuccess() {
-                    runOnUiThread {
-                        tvStatus.text = "Connected (5.8G)"
-                        tvAiMessage.text = "🤖 Camera connected successfully! Live stream active."
-                        InstaCameraManager.getInstance().startPreviewStream()
-                    }
-                }
-
-                override fun onConnectFail(errorCode: Int) {
-                    runOnUiThread {
-                        tvStatus.text = "Connection Failed"
-                        tvAiMessage.text = "🤖 Wi-Fi connection error ($errorCode). Please retry."
-                    }
-                }
-
-                override fun onCameraStateChanged(state: Int) {}
-            })
-        }
-
-        // Take Photo
-        btnTakePhoto.setOnClickListener {
-            InstaCameraManager.getInstance().takePicture(object : ICameraOperateCallback {
-                override fun onSuccess() {
-                    runOnUiThread {
-                        tvAiMessage.text = "🤖 360 Photo saved! Tap AI Album to edit."
-                        Toast.makeText(this@MainActivity, "Photo Saved!", Toast.LENGTH_SHORT).show()
-                    }
-                }
-
-                override fun onFailed(errorCode: Int) {
-                    runOnUiThread { tvAiMessage.text = "🤖 Failed to take photo ($errorCode)" }
-                }
-            })
-        }
-
-        // Record Toggle
-        btnRecordVideo.setOnClickListener {
-            if (!isRecording) {
-                InstaCameraManager.getInstance().startNormalRecord(object : ICameraOperateCallback {
-                    override fun onSuccess() {
-                        isRecording = true
+            tvAiMessage.text = "🤖 Connecting to camera..."
+            try {
+                InstaCameraManager.getInstance().openCamera(InstaCameraManager.CONNECT_TYPE_WIFI, object : IConnectInstaCameraCallback {
+                    override fun onConnectSuccess() {
                         runOnUiThread {
-                            btnRecordVideo.text = "STOP"
-                            tvStatus.text = "Recording 360..."
-                            tvAiMessage.text = "🤖 Recording 360 video in progress."
+                            tvStatus.text = "Connected"
+                            tvAiMessage.text = "🤖 Camera connected successfully!"
                         }
                     }
 
-                    override fun onFailed(errorCode: Int) {
-                        runOnUiThread { tvAiMessage.text = "🤖 Failed to start video." }
-                    }
-                })
-            } else {
-                InstaCameraManager.getInstance().stopNormalRecord(object : ICameraOperateCallback {
-                    override fun onSuccess() {
-                        isRecording = false
+                    override fun onConnectFail(errorCode: Int) {
                         runOnUiThread {
-                            btnRecordVideo.text = "REC"
-                            tvStatus.text = "Connected (5.8G)"
-                            tvAiMessage.text = "🤖 Video saved to camera SD card."
+                            tvStatus.text = "Failed"
+                            tvAiMessage.text = "🤖 Connection failed ($errorCode)."
                         }
                     }
 
-                    override fun onFailed(errorCode: Int) {
-                        runOnUiThread { tvAiMessage.text = "🤖 Failed to stop video." }
-                    }
+                    override fun onCameraStateChanged(state: Int) {}
                 })
+            } catch (e: Exception) {
+                tvStatus.text = "Error"
+                tvAiMessage.text = "🤖 Exception during connection."
             }
         }
 
-        // Open AI Editor & Local Album
+        btnTakePhoto.setOnClickListener {
+            try {
+                InstaCameraManager.getInstance().takePicture(object : ICameraOperateCallback {
+                    override fun onSuccess() {
+                        runOnUiThread {
+                            tvAiMessage.text = "🤖 Photo saved!"
+                            Toast.makeText(this@MainActivity, "Photo Saved!", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+
+                    override fun onFailed(errorCode: Int) {
+                        runOnUiThread { tvAiMessage.text = "🤖 Photo failed." }
+                    }
+                })
+            } catch (e: Exception) {
+                tvAiMessage.text = "🤖 Error capturing photo."
+            }
+        }
+
+        btnRecordVideo.setOnClickListener {
+            try {
+                if (!isRecording) {
+                    InstaCameraManager.getInstance().startNormalRecord(object : ICameraOperateCallback {
+                        override fun onSuccess() {
+                            isRecording = true
+                            runOnUiThread {
+                                btnRecordVideo.text = "STOP"
+                                tvStatus.text = "Recording"
+                                tvAiMessage.text = "🤖 Recording video..."
+                            }
+                        }
+
+                        override fun onFailed(errorCode: Int) {
+                            runOnUiThread { tvAiMessage.text = "🤖 Start record failed." }
+                        }
+                    })
+                } else {
+                    InstaCameraManager.getInstance().stopNormalRecord(object : ICameraOperateCallback {
+                        override fun onSuccess() {
+                            isRecording = false
+                            runOnUiThread {
+                                btnRecordVideo.text = "REC"
+                                tvStatus.text = "Connected"
+                                tvAiMessage.text = "🤖 Video saved."
+                            }
+                        }
+
+                        override fun onFailed(errorCode: Int) {
+                            runOnUiThread { tvAiMessage.text = "🤖 Stop record failed." }
+                        }
+                    })
+                }
+            } catch (e: Exception) {
+                tvAiMessage.text = "🤖 Error recording video."
+            }
+        }
+
         btnGallery.setOnClickListener {
             val intent = Intent(this, EditorActivity::class.java)
             startActivity(intent)
