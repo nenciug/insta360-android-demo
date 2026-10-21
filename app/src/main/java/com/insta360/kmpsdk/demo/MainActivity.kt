@@ -1,6 +1,8 @@
 package com.insta360.sdk.demo
 
+import android.content.Intent
 import android.os.Bundle
+import android.view.MotionEvent
 import android.view.TextureView
 import android.widget.Button
 import android.widget.TextView
@@ -21,12 +23,14 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnGallery: Button
 
     private var isRecording = false
+    private var lastX = 0f
+    private var lastY = 0f
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // UI Bindings
+        // Bindings
         videoPreview = findViewById(R.id.videoPreview)
         tvStatus = findViewById(R.id.tvStatus)
         tvAiMessage = findViewById(R.id.tvAiMessage)
@@ -35,17 +39,37 @@ class MainActivity : AppCompatActivity() {
         btnRecordVideo = findViewById(R.id.btnRecordVideo)
         btnGallery = findViewById(R.id.btnGallery)
 
-        // Wi-Fi Local Connection
+        // Touch listener for 360 degree pan/tilt image rotation
+        videoPreview.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    lastX = event.x
+                    lastY = event.y
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    val deltaX = event.x - lastX
+                    val deltaY = event.y - lastY
+                    // Pan and rotate 360 Live Viewport via SDK
+                    InstaCameraManager.getInstance().setPipelinePanFactor(deltaX * 0.01f)
+                    InstaCameraManager.getInstance().setPipelineTiltFactor(deltaY * 0.01f)
+                    lastX = event.x
+                    lastY = event.y
+                }
+            }
+            true
+        }
+
+        // Wi-Fi Connection
         btnConnectWifi.setOnClickListener {
             animateButton(btnConnectWifi)
             tvStatus.text = "Connecting..."
-            tvAiMessage.text = "🤖 Searching for camera Wi-Fi AP..."
+            tvAiMessage.text = "🤖 Searching for camera Wi-Fi network..."
 
             InstaCameraManager.getInstance().openCamera(InstaCameraManager.CONNECT_TYPE_WIFI, object : IConnectInstaCameraCallback {
                 override fun onConnectSuccess() {
                     runOnUiThread {
                         tvStatus.text = "Connected (5.8G)"
-                        tvAiMessage.text = "🤖 Camera connected successfully! Live stream active."
+                        tvAiMessage.text = "🤖 Camera connected! Swipe screen to rotate 360 view."
                         startLivePreview()
                     }
                 }
@@ -53,7 +77,7 @@ class MainActivity : AppCompatActivity() {
                 override fun onConnectFail(errorCode: Int) {
                     runOnUiThread {
                         tvStatus.text = "Connection Failed"
-                        tvAiMessage.text = "🤖 Wi-Fi connection error ($errorCode). Check settings."
+                        tvAiMessage.text = "🤖 Wi-Fi connection error ($errorCode). Please retry."
                     }
                 }
 
@@ -67,18 +91,18 @@ class MainActivity : AppCompatActivity() {
             InstaCameraManager.getInstance().takePicture(object : ICameraOperateCallback {
                 override fun onSuccess() {
                     runOnUiThread {
-                        tvAiMessage.text = "🤖 Photo saved to camera SD card!"
-                        Toast.makeText(this@MainActivity, "Photo Captured!", Toast.LENGTH_SHORT).show()
+                        tvAiMessage.text = "🤖 360 Photo saved! Tap Album to edit with AI."
+                        Toast.makeText(this@MainActivity, "Photo Saved!", Toast.LENGTH_SHORT).show()
                     }
                 }
 
                 override fun onFailed(errorCode: Int) {
-                    runOnUiThread { tvAiMessage.text = "🤖 Failed to take photo. Code: $errorCode" }
+                    runOnUiThread { tvAiMessage.text = "🤖 Failed to take photo ($errorCode)" }
                 }
             })
         }
 
-        // Record Video / Stop
+        // Record Toggle
         btnRecordVideo.setOnClickListener {
             animateButton(btnRecordVideo)
             if (!isRecording) {
@@ -87,13 +111,13 @@ class MainActivity : AppCompatActivity() {
                         isRecording = true
                         runOnUiThread {
                             btnRecordVideo.text = "STOP"
-                            tvStatus.text = "Recording..."
-                            tvAiMessage.text = "🤖 Recording video in progress. Keep steady."
+                            tvStatus.text = "Recording 360..."
+                            tvAiMessage.text = "🤖 Recording 360 video. Swipe to check camera angles!"
                         }
                     }
 
                     override fun onFailed(errorCode: Int) {
-                        runOnUiThread { tvAiMessage.text = "🤖 Failed to start video recording." }
+                        runOnUiThread { tvAiMessage.text = "🤖 Failed to start video." }
                     }
                 })
             } else {
@@ -103,22 +127,22 @@ class MainActivity : AppCompatActivity() {
                         runOnUiThread {
                             btnRecordVideo.text = "REC"
                             tvStatus.text = "Connected (5.8G)"
-                            tvAiMessage.text = "🤖 Recording stopped. Video saved locally on SD."
+                            tvAiMessage.text = "🤖 Video saved to camera SD card."
                         }
                     }
 
                     override fun onFailed(errorCode: Int) {
-                        runOnUiThread { tvAiMessage.text = "🤖 Failed to stop recording." }
+                        runOnUiThread { tvAiMessage.text = "🤖 Failed to stop video." }
                     }
                 })
             }
         }
 
-        // Gallery & Local Download Handler
+        // Open AI Editor & Local Album
         btnGallery.setOnClickListener {
             animateButton(btnGallery)
-            tvAiMessage.text = "🤖 Opening SD Card Gallery & Local Download manager..."
-            Toast.makeText(this, "Loading Camera Album...", Toast.LENGTH_SHORT).show()
+            val intent = Intent(this, EditorActivity::class.java)
+            startActivity(intent)
         }
     }
 
