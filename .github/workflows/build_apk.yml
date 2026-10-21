@@ -1,3 +1,4 @@
+YAML
 name: Build Insta360 APK
 
 on:
@@ -19,14 +20,14 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
 
       - name: Make gradlew executable
         run: chmod +x gradlew
 
-      - name: Build APK Debug
-        run: ./gradlew assembleDebug
+      - name: Build APK
+        run: ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
