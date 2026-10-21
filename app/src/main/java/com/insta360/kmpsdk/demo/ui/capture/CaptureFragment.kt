@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -19,9 +20,13 @@ import com.insta360.kmpsdk.demo.databinding.FragmentCaptureBinding
 import com.insta360.kmpsdk.demo.ui.common.CameraDemoDisplayLabels
 import com.insta360.kmpsdk.demo.ui.common.observeCameraDisconnectedNavigateToConnection
 import com.insta360.kmpsdk.demo.ui.connection.ConnectionViewModel
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-/** 不带预览的拍摄页：仅通过 CameraCapture 控制拍摄参数与开始/停止，无预览流。 */
+/**
+ * Enhanced CaptureFragment supporting complete camera controls, localized UI labels,
+ * real-time interaction locking, and advanced status updates.
+ */
 class CaptureFragment : Fragment() {
     private var _binding: FragmentCaptureBinding? = null
     private val binding get() = _binding!!
@@ -54,38 +59,63 @@ class CaptureFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         observeCameraDisconnectedNavigateToConnection(connectionViewModel)
 
-        binding.backLink.setOnClickListener { findNavController().popBackStack() }
+        setupClickListeners()
+        observeUiState()
+
+        captureViewModel.onAppear()
+    }
+
+    private fun setupClickListeners() {
+        binding.backLink.setOnClickListener { 
+            findNavController().popBackStack() 
+        }
+        
         binding.openCaptureParamsSheet.setOnClickListener {
             CaptureParamsBottomSheetFragment.show(childFragmentManager)
         }
+        
         binding.captureBtn.setOnClickListener {
             captureViewModel.onPrimaryCaptureButtonClicked()
         }
+    }
 
+    private fun observeUiState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                captureViewModel.ui.collect { s ->
-                    // busy（切镜头/模式）与拍摄命令在途共用同一全屏遮罩
+                captureViewModel.ui.collectLatest { s ->
                     val blocking = s.busy || s.captureCommand != null
+                    
+                    // Update overlay and status
                     binding.blockingOverlay.isVisible = blocking
-                    binding.blockingOverlay.setText(s.loadingText?:"")
+                    binding.blockingOverlay.setText(s.loadingText ?: "")
+                    
+                    // Lens controls
                     binding.lensSection.isVisible = s.lensRowVisible
                     rebuildLensChips(s.lensOptions, s.selectedLens)
+                    
+                    // Mode controls
                     rebuildModeChips(s.modeOptions, s.selectedMode)
+                    
+                    // Primary action button
                     binding.captureBtn.text = s.captureButtonLabel
                     binding.captureBtn.isEnabled = s.captureButtonEnabled && !blocking
+                    
+                    // Status indicators
                     binding.captureProgressLabel.text = s.progressLabel.orEmpty()
                     binding.captureProgressLabel.isVisible = !s.progressLabel.isNullOrEmpty()
+                    
                     binding.captureSubStatusLabel.text = s.subStatusLabel.orEmpty()
                     binding.captureSubStatusLabel.isVisible = !s.subStatusLabel.isNullOrEmpty()
+                    
+                    // Result Summary
                     binding.resultPanel.isVisible = s.resultVisible
                     binding.resultSummary.text = s.resultSummary
+                    
+                    // Lock secondary UI controls when busy or capturing
                     applySecondaryInteractionLock(blocking || s.captureFlowActive)
                 }
             }
         }
-
-        captureViewModel.onAppear()
     }
 
     override fun onStart() {
@@ -107,7 +137,9 @@ class CaptureFragment : Fragment() {
             selected = selected,
             textSizeSp = 14f,
             label = { CameraDemoDisplayLabels.sensorMode(requireContext(), it) },
-            onClick = captureViewModel::selectLens,
+            onClick = { lens ->
+                captureViewModel.selectLens(lens)
+            },
         )
     }
 
@@ -123,15 +155,17 @@ class CaptureFragment : Fragment() {
                 options = options,
                 selected = selected,
                 label = { CameraDemoDisplayLabels.functionMode(requireContext(), it) },
-                onClick = captureViewModel::selectMode,
+                onClick = { mode ->
+                    captureViewModel.selectMode(mode)
+                },
             )
     }
 
     private fun applySecondaryInteractionLock(locked: Boolean) {
-        val alpha = if (locked) 0.45f else 1f
-        listOf(binding.backLink, binding.openCaptureParamsSheet).forEach {
-            it.isEnabled = !locked
-            it.alpha = alpha
+        val alpha = if (locked) 0.45f else 1.0f
+        listOf(binding.backLink, binding.openCaptureParamsSheet).forEach { button ->
+            button.isEnabled = !locked
+            button.alpha = alpha
         }
         CaptureChips.setInteractionLocked(binding.lensChipContainer, locked)
         CaptureChips.setInteractionLocked(binding.modeChipContainer, locked)
