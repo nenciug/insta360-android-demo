@@ -27,7 +27,6 @@
         android:networkSecurityConfig="@xml/network_security_config"
         tools:targetApi="35">
 
-        <!-- MainActivity (Ecranul principal cu Live Preview și Controale) -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -39,7 +38,6 @@
             </intent-filter>
         </activity>
 
-        <!-- EditorActivity (Ecranul de editare AI) -->
         <activity 
             android:name=".EditorActivity"
             android:exported="false"
