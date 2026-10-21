@@ -1,120 +1,134 @@
-package com.insta360.kmpsdk.demo
+package com.insta360.sdk.demo
 
-import android.Manifest
-import android.os.Build
 import android.os.Bundle
-import android.view.View
+import android.view.TextureView
+import android.widget.Button
+import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.ui.setupWithNavController
-import com.hjq.permissions.Permission
-import com.hjq.permissions.XXPermissions
-import com.arashivision.sdk.camera.InstaCameraSDK
-import com.arashivision.sdk.media.InstaMediaSDK
-import com.insta360.kmpsdk.demo.databinding.ActivityMainBinding
-import com.insta360.kmpsdk.demo.util.AssetsUtil
-import com.insta360.kmpsdk.demo.util.DemoAppPreferences
-import com.insta360.kmpsdk.demo.util.DemoLogcatDumper
-import timber.log.Timber
-import java.io.File
+import com.arashivision.sdkcamera.camera.InstaCameraManager
+import com.arashivision.sdkcamera.camera.callback.ICameraOperateCallback
+import com.arashivision.sdkcamera.camera.callback.IConnectInstaCameraCallback
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var binding: ActivityMainBinding
+
+    private lateinit var videoPreview: TextureView
+    private lateinit var tvStatus: TextView
+    private lateinit var tvAiMessage: TextView
+    private lateinit var btnConnectWifi: Button
+    private lateinit var btnTakePhoto: Button
+    private lateinit var btnRecordVideo: Button
+    private lateinit var btnGallery: Button
+
+    private var isRecording = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        setContentView(R.layout.activity_main)
 
-        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
+        // UI Bindings
+        videoPreview = findViewById(R.id.videoPreview)
+        tvStatus = findViewById(R.id.tvStatus)
+        tvAiMessage = findViewById(R.id.tvAiMessage)
+        btnConnectWifi = findViewById(R.id.btnConnectWifi)
+        btnTakePhoto = findViewById(R.id.btnTakePhoto)
+        btnRecordVideo = findViewById(R.id.btnRecordVideo)
+        btnGallery = findViewById(R.id.btnGallery)
 
-        val navHost =
-            supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
-        val navController = navHost.navController
-        binding.bottomNav.setupWithNavController(navController)
+        // Wi-Fi Local Connection
+        btnConnectWifi.setOnClickListener {
+            animateButton(btnConnectWifi)
+            tvStatus.text = "Connecting..."
+            tvAiMessage.text = "🤖 Searching for camera Wi-Fi AP..."
 
-        navController.addOnDestinationChangedListener { _, destination, _ ->
-            val hideBottom =
-                when (destination.id) {
-                    R.id.previewFragment, R.id.captureFragment, R.id.liveStreamFragment, R.id.videoPlayerFragment, R.id.imagePlayerFragment, R.id.stitchFragment -> true
-                    else -> false
+            InstaCameraManager.getInstance().openCamera(InstaCameraManager.CONNECT_TYPE_WIFI, object : IConnectInstaCameraCallback {
+                override fun onConnectSuccess() {
+                    runOnUiThread {
+                        tvStatus.text = "Connected (5.8G)"
+                        tvAiMessage.text = "🤖 Camera connected successfully! Live stream active."
+                        startLivePreview()
+                    }
                 }
-            binding.bottomNav.visibility = if (hideBottom) View.GONE else View.VISIBLE
-        }
 
-        initSDK()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        // 后台期间 logcat 子进程可能被系统回收，回到前台立即恢复，不必等看门狗退避周期
-        DemoLogcatDumper.ensureRunning(this)
-    }
-
-    private fun initSDK() {
-        val req =
-            XXPermissions
-                .with(this)
-                .permission(Permission.Group.BLUETOOTH)
-                .permission(Permission.ACCESS_FINE_LOCATION, Permission.ACCESS_COARSE_LOCATION)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            req.permission(Permission.POST_NOTIFICATIONS)
-        }
-        if (DemoApplication.instance.applicationInfo.targetSdkVersion >= Build.VERSION_CODES.TIRAMISU) {
-            req.permission(Permission.READ_MEDIA_IMAGES, Permission.READ_MEDIA_VIDEO, Permission.READ_MEDIA_AUDIO)
-        } else {
-            req.permission(Permission.Group.STORAGE)
-        }
-        req.request { _, _ ->
-            val bluetoothOk = XXPermissions.isGranted(this, Permission.Group.BLUETOOTH)
-            val locationOk =
-                XXPermissions.isGranted(
-                    this,
-                    Permission.ACCESS_FINE_LOCATION,
-                    Permission.ACCESS_COARSE_LOCATION,
-                )
-            if (bluetoothOk && locationOk) {
-                InstaCameraSDK.init(DemoApplication.instance) {
-                    cacheDir = externalCacheDir?.absolutePath
-                    logLevel = DemoAppPreferences.readLogLevel(this@MainActivity)
+                override fun onConnectFail(errorCode: Int) {
+                    runOnUiThread {
+                        tvStatus.text = "Connection Failed"
+                        tvAiMessage.text = "🤖 Wi-Fi connection error ($errorCode). Check settings."
+                    }
                 }
-                InstaMediaSDK.init(DemoApplication.instance)
-                copyAssets()
-                // SDK 初始化后校验 dumper 目录与 SDK 日志目录一致，不一致则切换
-                DemoLogcatDumper.alignWithSdkLogDir(this)
+
+                override fun onCameraStateChanged(state: Int) {}
+            })
+        }
+
+        // Take Photo
+        btnTakePhoto.setOnClickListener {
+            animateButton(btnTakePhoto)
+            InstaCameraManager.getInstance().takePicture(object : ICameraOperateCallback {
+                override fun onSuccess() {
+                    runOnUiThread {
+                        tvAiMessage.text = "🤖 Photo saved to camera SD card!"
+                        Toast.makeText(this@MainActivity, "Photo Captured!", Toast.LENGTH_SHORT).show()
+                    }
+                }
+
+                override fun onFailed(errorCode: Int) {
+                    runOnUiThread { tvAiMessage.text = "🤖 Failed to take photo. Code: $errorCode" }
+                }
+            })
+        }
+
+        // Record Video / Stop
+        btnRecordVideo.setOnClickListener {
+            animateButton(btnRecordVideo)
+            if (!isRecording) {
+                InstaCameraManager.getInstance().startNormalRecord(object : ICameraOperateCallback {
+                    override fun onSuccess() {
+                        isRecording = true
+                        runOnUiThread {
+                            btnRecordVideo.text = "STOP"
+                            tvStatus.text = "Recording..."
+                            tvAiMessage.text = "🤖 Recording video in progress. Keep steady."
+                        }
+                    }
+
+                    override fun onFailed(errorCode: Int) {
+                        runOnUiThread { tvAiMessage.text = "🤖 Failed to start video recording." }
+                    }
+                })
             } else {
-                Toast
-                    .makeText(
-                        this,
-                        getString(R.string.ble_scan_permissions_required),
-                        Toast.LENGTH_SHORT,
-                    ).show()
+                InstaCameraManager.getInstance().stopNormalRecord(object : ICameraOperateCallback {
+                    override fun onSuccess() {
+                        isRecording = false
+                        runOnUiThread {
+                            btnRecordVideo.text = "REC"
+                            tvStatus.text = "Connected (5.8G)"
+                            tvAiMessage.text = "🤖 Recording stopped. Video saved locally on SD."
+                        }
+                    }
+
+                    override fun onFailed(errorCode: Int) {
+                        runOnUiThread { tvAiMessage.text = "🤖 Failed to stop recording." }
+                    }
+                })
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                !XXPermissions.isGranted(this, Manifest.permission.POST_NOTIFICATIONS)
-            ) {
-                Timber.w("Notification permission not granted: foreground service notification may be hidden by the system, enable it in settings")
-            }
+        }
+
+        // Gallery & Local Download Handler
+        btnGallery.setOnClickListener {
+            animateButton(btnGallery)
+            tvAiMessage.text = "🤖 Opening SD Card Gallery & Local Download manager..."
+            Toast.makeText(this, "Loading Camera Album...", Toast.LENGTH_SHORT).show()
         }
     }
 
-    private fun copyAssets() {
-        val dirStitchFisheye = File("${getExternalFilesDir(null)}/stitch_fisheye")
-        if (!dirStitchFisheye.exists()) {
-            AssetsUtil.copyFilesFromAssets(this, "stitch_fisheye", dirStitchFisheye.absolutePath)
-        }
-        val dirPureShot = File("${getExternalFilesDir(null)}/pure_shot")
-        if (!dirPureShot.exists()) {
-            AssetsUtil.copyFilesFromAssets(this, "pure_shot_algo", dirPureShot.absolutePath)
+    private fun startLivePreview() {
+        InstaCameraManager.getInstance().startPreviewStream()
+    }
+
+    private fun animateButton(button: Button) {
+        button.animate().scaleX(0.90f).scaleY(0.90f).setDuration(70).withEndAction {
+            button.animate().scaleX(1.0f).scaleY(1.0f).setDuration(70)
         }
     }
 }
