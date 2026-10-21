@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:background="#101010">
 
-    <!-- Top Navigation -->
+    <!-- Top Navigation Header -->
     <RelativeLayout
         android:id="@+id/editorHeader"
         android:layout_width="match_parent"
@@ -62,7 +62,6 @@
             android:textColor="#00E676"
             android:textSize="12sp" />
 
-        <!-- AI Presets Horizontal Scroll -->
         <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
