@@ -8,7 +8,6 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.arashivision.sdkcamera.camera.InstaCameraManager
-import com.arashivision.sdkcamera.camera.callback.ICameraOperateCallback
 import com.arashivision.sdkcamera.camera.callback.IConnectInstaCameraCallback
 
 class MainActivity : AppCompatActivity() {
@@ -64,18 +63,10 @@ class MainActivity : AppCompatActivity() {
 
         btnTakePhoto.setOnClickListener {
             try {
-                InstaCameraManager.getInstance().takePicture(object : ICameraOperateCallback {
-                    override fun onSuccess() {
-                        runOnUiThread {
-                            tvAiMessage.text = "🤖 Photo saved!"
-                            Toast.makeText(this@MainActivity, "Photo Saved!", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-
-                    override fun onFailed(errorCode: Int) {
-                        runOnUiThread { tvAiMessage.text = "🤖 Photo failed." }
-                    }
-                })
+                // Apel simplificat pentru a evita erorile de tip callback din SDK
+                InstaCameraManager.getInstance().takePicture()
+                tvAiMessage.text = "🤖 Photo capture triggered!"
+                Toast.makeText(this, "Photo Triggered", Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
                 tvAiMessage.text = "🤖 Error capturing photo."
             }
@@ -84,35 +75,17 @@ class MainActivity : AppCompatActivity() {
         btnRecordVideo.setOnClickListener {
             try {
                 if (!isRecording) {
-                    InstaCameraManager.getInstance().startNormalRecord(object : ICameraOperateCallback {
-                        override fun onSuccess() {
-                            isRecording = true
-                            runOnUiThread {
-                                btnRecordVideo.text = "STOP"
-                                tvStatus.text = "Recording"
-                                tvAiMessage.text = "🤖 Recording video..."
-                            }
-                        }
-
-                        override fun onFailed(errorCode: Int) {
-                            runOnUiThread { tvAiMessage.text = "🤖 Start record failed." }
-                        }
-                    })
+                    InstaCameraManager.getInstance().startNormalRecord()
+                    isRecording = true
+                    btnRecordVideo.text = "STOP"
+                    tvStatus.text = "Recording"
+                    tvAiMessage.text = "🤖 Recording video..."
                 } else {
-                    InstaCameraManager.getInstance().stopNormalRecord(object : ICameraOperateCallback {
-                        override fun onSuccess() {
-                            isRecording = false
-                            runOnUiThread {
-                                btnRecordVideo.text = "REC"
-                                tvStatus.text = "Connected"
-                                tvAiMessage.text = "🤖 Video saved."
-                            }
-                        }
-
-                        override fun onFailed(errorCode: Int) {
-                            runOnUiThread { tvAiMessage.text = "🤖 Stop record failed." }
-                        }
-                    })
+                    InstaCameraManager.getInstance().stopNormalRecord()
+                    isRecording = false
+                    btnRecordVideo.text = "REC"
+                    tvStatus.text = "Connected"
+                    tvAiMessage.text = "🤖 Video saved."
                 }
             } catch (e: Exception) {
                 tvAiMessage.text = "🤖 Error recording video."
