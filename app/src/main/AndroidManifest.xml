@@ -72,6 +72,12 @@
                 android:resource="@xml/device_filter" />
         </activity>
 
+        <!-- Activitatea AI Editor adaugata corect -->
+        <activity 
+            android:name=".EditorActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.NoActionBar" />
+
         <service
             android:name=".service.CameraSessionForegroundService"
             android:exported="false"
