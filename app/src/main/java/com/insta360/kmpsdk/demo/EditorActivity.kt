@@ -1,4 +1,4 @@
-package com.insta360.sdk.demo
+package com.insta360.kmpsdk.demo
 
 import android.os.Bundle
 import android.widget.Button
@@ -30,28 +30,28 @@ class EditorActivity : AppCompatActivity() {
         btnExport = findViewById(R.id.btnExport)
 
         btnAiTinyPlanet.setOnClickListener {
-            tvAiEditorStatus.text = "🤖 AI Applied: Tiny Planet 360° Projection."
-            Toast.makeText(this, "Projection: Tiny Planet", Toast.LENGTH_SHORT).show()
+            tvAiEditorStatus.text = "🤖 AI Applied: Tiny Planet Projection."
+            Toast.makeText(this, "Tiny Planet Applied", Toast.LENGTH_SHORT).show()
         }
 
         btnAiFisheye.setOnClickListener {
-            tvAiEditorStatus.text = "🤖 AI Applied: Wide Fisheye View."
-            Toast.makeText(this, "Projection: Fisheye", Toast.LENGTH_SHORT).show()
+            tvAiEditorStatus.text = "🤖 AI Applied: Fisheye View."
+            Toast.makeText(this, "Fisheye Applied", Toast.LENGTH_SHORT).show()
         }
 
         btnAiEnhance.setOnClickListener {
-            tvAiEditorStatus.text = "🤖 AI Applied: Color Balance & Sharpness Boosted."
-            Toast.makeText(this, "Auto-Enhance Applied!", Toast.LENGTH_SHORT).show()
+            tvAiEditorStatus.text = "🤖 AI Applied: Auto-Enhance."
+            Toast.makeText(this, "Auto-Enhance Applied", Toast.LENGTH_SHORT).show()
         }
 
         btnAiReframe.setOnClickListener {
-            tvAiEditorStatus.text = "🤖 AI Applied: Reframed for Mobile Vertical (9:16)."
-            Toast.makeText(this, "Cropped to 9:16", Toast.LENGTH_SHORT).show()
+            tvAiEditorStatus.text = "🤖 AI Applied: Reframe (9:16)."
+            Toast.makeText(this, "Reframe Applied", Toast.LENGTH_SHORT).show()
         }
 
         btnExport.setOnClickListener {
-            tvAiEditorStatus.text = "🤖 Photo exported successfully to local storage!"
-            Toast.makeText(this, "Saved to Gallery /Insta360_AI/", Toast.LENGTH_LONG).show()
+            tvAiEditorStatus.text = "🤖 Exported successfully!"
+            Toast.makeText(this, "Saved to device storage", Toast.LENGTH_LONG).show()
         }
     }
 }
